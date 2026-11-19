@@ -1,0 +1,23 @@
+{
+  "AUTH": {
+    "LOGIN_TITLE": "Sign In",
+    "REGISTER_TITLE": "Create Account",
+    "CARNE": "University ID",
+    "EMAIL": "Institutional Email",
+    "PASSWORD": "Password",
+    "NOMBRE": "First Name",
+    "APELLIDO": "Last Name",
+    "ROL": "Platform Role",
+    "ROLE_ESTUDIANTE": "Student",
+    "ROLE_TUTOR": "Tutor",
+    "ROLE_COORDINADOR": "Coordinator",
+    "SUBMIT_LOGIN": "Log In",
+    "SUBMIT_REGISTER": "Register",
+    "NO_ACCOUNT": "Don't have an account? Register here",
+    "HAS_ACCOUNT": "Already have an account? Sign in",
+    "ERR_REQUIRED": "This field is required",
+    "ERR_EMAIL": "Enter a valid email address",
+    "ERR_MIN_LENGTH": "Must be at least 6 characters long",
+    "ERR_INVALID_CREDENTIALS": "Invalid email or password"
+  }
+}
