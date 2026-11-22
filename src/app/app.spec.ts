@@ -1,12 +1,15 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 import { App } from './app';
+import { I18nService } from './core/services/i18n.service';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-    })
-      .compileComponents();
+      providers: [provideRouter([]), provideHttpClient()]
+    }).compileComponents();
   });
 
   it('should create the app', () => {
@@ -15,10 +18,17 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render navbar brand and switch language dynamically', () => {
     const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
+    const i18n = TestBed.inject(I18nService);
+    fixture.detectChanges();
+
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, dsw4-2026-equipoXX-edumentor-frontend');
+    expect(compiled.querySelector('.brand-text')?.textContent?.trim()).toBe('EduMentor Hub');
+    expect(i18n.currentLang()).toBe('es');
+
+    i18n.toggleLanguage();
+    fixture.detectChanges();
+    expect(i18n.currentLang()).toBe('en');
   });
 });

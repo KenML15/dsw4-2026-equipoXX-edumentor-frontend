@@ -1,13 +1,13 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { I18nService } from './core/services/i18n.service';
+import { NavbarComponent } from './shared/components/navbar/navbar.component';
+import { TranslatePipe } from './core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [RouterOutlet, NavbarComponent, TranslatePipe],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
-  readonly i18n = inject(I18nService);
-}
+export class App {}
