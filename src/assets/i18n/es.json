@@ -1,0 +1,23 @@
+{
+  "AUTH": {
+    "LOGIN_TITLE": "Iniciar Sesión",
+    "REGISTER_TITLE": "Crear Cuenta",
+    "CARNE": "Carné Universitario",
+    "EMAIL": "Correo Institucional",
+    "PASSWORD": "Contraseña",
+    "NOMBRE": "Nombre",
+    "APELLIDO": "Apellido",
+    "ROL": "Rol en la plataforma",
+    "ROLE_ESTUDIANTE": "Estudiante",
+    "ROLE_TUTOR": "Tutor",
+    "ROLE_COORDINADOR": "Coordinador",
+    "SUBMIT_LOGIN": "Ingresar",
+    "SUBMIT_REGISTER": "Registrarse",
+    "NO_ACCOUNT": "¿No tienes cuenta? Regístrate aquí",
+    "HAS_ACCOUNT": "¿Ya tienes cuenta? Inicia sesión",
+    "ERR_REQUIRED": "Este campo es obligatorio",
+    "ERR_EMAIL": "Ingresa un correo electrónico válido",
+    "ERR_MIN_LENGTH": "Debe tener al menos 6 caracteres",
+    "ERR_INVALID_CREDENTIALS": "Correo o contraseña incorrectos"
+  }
+}
