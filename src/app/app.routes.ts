@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, roleGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -17,6 +17,15 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/materias/materias-catalog.component').then(m => m.MateriasCatalogComponent)
+  },
+  {
+    path: 'disponibilidad',
+    canActivate: [roleGuard],
+    data: { roles: ['TUTOR', 'COORDINADOR'] },
+    loadComponent: () =>
+      import('./features/disponibilidad/disponibilidad-matrix.component').then(
+        m => m.DisponibilidadMatrixComponent
+      )
   },
   {
     path: '',

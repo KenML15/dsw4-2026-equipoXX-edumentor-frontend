@@ -1,0 +1,200 @@
+<section class="page-section" aria-labelledby="disponibilidad-heading">
+  <header class="page-header">
+    <div>
+      <h1 id="disponibilidad-heading" class="page-title">
+        {{ 'DISPONIBILIDAD.TITLE' | translate }}
+      </h1>
+      <p class="page-subtitle">{{ 'DISPONIBILIDAD.SUBTITLE' | translate }}</p>
+    </div>
+  </header>
+
+  @if (isCoordinator()) {
+    <div class="card coordinator-bar">
+      <p class="coordinator-hint">{{ 'DISPONIBILIDAD.COORDINATOR_HINT' | translate }}</p>
+      <div class="coordinator-controls">
+        <label for="coord-tutor-id">{{ 'DISPONIBILIDAD.FIELD_TUTOR_ID' | translate }}</label>
+        <input
+          id="coord-tutor-id"
+          type="number"
+          min="1"
+          [value]="coordinatorTutorId()"
+          (input)="onCoordinatorTutorIdChange($event)"
+        />
+        <button type="button" class="btn btn-primary" (click)="loadBloques()">
+          {{ 'DISPONIBILIDAD.COORDINATOR_LOAD' | translate }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="alert alert-error" role="alert">
+      {{ error }}
+    </div>
+  }
+
+  @if (successMessage(); as success) {
+    <div class="alert alert-success" role="status" aria-live="polite">
+      {{ success }}
+    </div>
+  }
+
+  <section class="card" aria-labelledby="add-block-heading">
+    <h2 id="add-block-heading" class="card-title">
+      {{ 'DISPONIBILIDAD.ADD_BLOCK_TITLE' | translate }}
+    </h2>
+
+    <form class="inline-form" [formGroup]="blockForm" (ngSubmit)="onAddBlockSubmit()" novalidate>
+      <div class="form-group">
+        <label for="disp-dia">{{ 'DISPONIBILIDAD.FIELD_DAY' | translate }}</label>
+        <select id="disp-dia" formControlName="diaSemana">
+          @for (day of days; track day) {
+            <option [value]="day">{{ 'DAYS.' + day | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="disp-inicio">{{ 'DISPONIBILIDAD.FIELD_START' | translate }}</label>
+        <input id="disp-inicio" type="time" formControlName="horaInicio" />
+      </div>
+
+      <div class="form-group">
+        <label for="disp-fin">{{ 'DISPONIBILIDAD.FIELD_END' | translate }}</label>
+        <input id="disp-fin" type="time" formControlName="horaFin" />
+      </div>
+
+      <div class="form-submit">
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+          + {{ 'DISPONIBILIDAD.ADD_BUTTON' | translate }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="matrix-heading">
+    <div class="matrix-header">
+      <div>
+        <h2 id="matrix-heading" class="card-title">
+          {{ 'DISPONIBILIDAD.MATRIX_TITLE' | translate }}
+        </h2>
+        <p class="matrix-hint">{{ 'DISPONIBILIDAD.MATRIX_HINT' | translate }}</p>
+      </div>
+
+      <div class="legend" aria-hidden="true">
+        <span class="legend-item">
+          <span class="legend-dot dot-active"></span>
+          {{ 'DISPONIBILIDAD.LEGEND_ACTIVE' | translate }}
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot dot-inactive"></span>
+          {{ 'DISPONIBILIDAD.LEGEND_INACTIVE' | translate }}
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot dot-free"></span>
+          {{ 'DISPONIBILIDAD.LEGEND_FREE' | translate }}
+        </span>
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <p class="state-message" role="status">{{ 'COMMON.LOADING' | translate }}</p>
+    } @else {
+      <div class="matrix-wrapper">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th scope="col" class="hour-header">{{ 'DISPONIBILIDAD.HOUR_COL' | translate }}</th>
+              @for (day of days; track day) {
+                <th scope="col">{{ 'DAYS.' + day | translate }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (hour of hours; track hour) {
+              <tr>
+                <th scope="row" class="hour-cell">
+                  {{ formatHour(hour) }} - {{ formatHour(hour + 1) }}
+                </th>
+                @for (day of days; track day) {
+                  @let block = findBlockForCell(day, hour);
+                  <td class="slot-td">
+                    <button
+                      type="button"
+                      class="slot-btn"
+                      [class.slot-active]="block !== null && block.activo"
+                      [class.slot-inactive]="block !== null && !block.activo"
+                      [disabled]="isSaving()"
+                      [attr.aria-pressed]="block !== null && block.activo"
+                      [attr.aria-label]="getCellAriaLabel(day, hour)"
+                      (click)="onCellClick(day, hour)"
+                    >
+                      @if (block) {
+                        <span>
+                          {{ (block.activo ? 'DISPONIBILIDAD.BLOCK_ACTIVE' : 'DISPONIBILIDAD.BLOCK_INACTIVE') | translate }}
+                        </span>
+                      } @else {
+                        <span class="slot-plus" aria-hidden="true">+</span>
+                      }
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="card" aria-labelledby="blocks-list-heading">
+    <h2 id="blocks-list-heading" class="card-title">
+      {{ 'DISPONIBILIDAD.LIST_TITLE' | translate }}
+    </h2>
+
+    @if (bloques().length === 0) {
+      <p class="state-message">{{ 'DISPONIBILIDAD.EMPTY_BLOCKS' | translate }}</p>
+    } @else {
+      <ul class="blocks-list">
+        @for (bloque of bloques(); track bloque.id) {
+          <li class="block-item">
+            <div class="block-info">
+              <span class="block-day">{{ 'DAYS.' + bloque.diaSemana | translate }}</span>
+              <span class="block-hours">
+                {{ formatTimeShort(bloque.horaInicio) }} – {{ formatTimeShort(bloque.horaFin) }}
+              </span>
+              <span
+                class="status-badge"
+                [class.status-active]="bloque.activo"
+                [class.status-inactive]="!bloque.activo"
+              >
+                {{ (bloque.activo ? 'DISPONIBILIDAD.BLOCK_ACTIVE' : 'DISPONIBILIDAD.BLOCK_INACTIVE') | translate }}
+              </span>
+            </div>
+
+            <div class="block-actions">
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-secondary]="bloque.activo"
+                [class.btn-primary]="!bloque.activo"
+                [disabled]="isSaving()"
+                (click)="toggleBlock(bloque)"
+              >
+                {{ (bloque.activo ? 'DISPONIBILIDAD.DEACTIVATE' : 'DISPONIBILIDAD.ACTIVATE') | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger"
+                [disabled]="isSaving()"
+                (click)="deleteBlock(bloque)"
+              >
+                {{ 'COMMON.DELETE' | translate }}
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</section>
