@@ -1,0 +1,216 @@
+<section class="page-section" aria-labelledby="materias-heading">
+  <header class="page-header">
+    <div>
+      <h1 id="materias-heading" class="page-title">{{ 'MATERIAS.TITLE' | translate }}</h1>
+      <p class="page-subtitle">{{ 'MATERIAS.SUBTITLE' | translate }}</p>
+    </div>
+
+    @if (isCoordinator()) {
+      <button type="button" class="btn btn-primary" (click)="openCreateForm()">
+        + {{ 'MATERIAS.NEW_BUTTON' | translate }}
+      </button>
+    }
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="alert alert-error" role="alert">
+      {{ error }}
+    </div>
+  }
+
+  @if (successMessage(); as success) {
+    <div class="alert alert-success" role="status" aria-live="polite">
+      {{ success }}
+    </div>
+  }
+
+  @if (isFormOpen() && isCoordinator()) {
+    <section class="card form-card" aria-labelledby="materia-form-heading">
+      <div class="card-header">
+        <h2 id="materia-form-heading" class="card-title">
+          {{ (editingId() ? 'MATERIAS.EDIT_TITLE' : 'MATERIAS.CREATE_TITLE') | translate }}
+        </h2>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="closeForm()"
+          [attr.aria-label]="'COMMON.CLOSE' | translate"
+        >
+          ✕
+        </button>
+      </div>
+
+      <form [formGroup]="materiaForm" (ngSubmit)="onSubmit()" novalidate>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="materia-codigo">{{ 'MATERIAS.FIELD_CODE' | translate }}</label>
+            <input
+              id="materia-codigo"
+              type="text"
+              formControlName="codigo"
+              [placeholder]="'MATERIAS.FIELD_CODE_PLACEHOLDER' | translate"
+              [attr.aria-invalid]="materiaForm.controls.codigo.invalid && materiaForm.controls.codigo.touched"
+              aria-describedby="codigo-error"
+            />
+            @if (materiaForm.controls.codigo.invalid && materiaForm.controls.codigo.touched) {
+              <span id="codigo-error" class="field-error" role="alert">
+                {{ 'MATERIAS.ERR_CODE_REQUIRED' | translate }}
+              </span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="materia-creditos">{{ 'MATERIAS.FIELD_CREDITS' | translate }}</label>
+            <input
+              id="materia-creditos"
+              type="number"
+              min="1"
+              max="20"
+              formControlName="creditos"
+              [attr.aria-invalid]="materiaForm.controls.creditos.invalid && materiaForm.controls.creditos.touched"
+              aria-describedby="creditos-error"
+            />
+            @if (materiaForm.controls.creditos.invalid && materiaForm.controls.creditos.touched) {
+              <span id="creditos-error" class="field-error" role="alert">
+                {{ 'MATERIAS.ERR_CREDITS_RANGE' | translate }}
+              </span>
+            }
+          </div>
+
+          <div class="form-group form-group-full">
+            <label for="materia-nombre">{{ 'MATERIAS.FIELD_NAME' | translate }}</label>
+            <input
+              id="materia-nombre"
+              type="text"
+              formControlName="nombre"
+              [placeholder]="'MATERIAS.FIELD_NAME_PLACEHOLDER' | translate"
+              [attr.aria-invalid]="materiaForm.controls.nombre.invalid && materiaForm.controls.nombre.touched"
+              aria-describedby="nombre-error"
+            />
+            @if (materiaForm.controls.nombre.invalid && materiaForm.controls.nombre.touched) {
+              <span id="nombre-error" class="field-error" role="alert">
+                {{ 'MATERIAS.ERR_NAME_REQUIRED' | translate }}
+              </span>
+            }
+          </div>
+
+          <div class="form-group form-group-full">
+            <label for="materia-descripcion">{{ 'MATERIAS.FIELD_DESCRIPTION' | translate }}</label>
+            <textarea
+              id="materia-descripcion"
+              rows="3"
+              formControlName="descripcion"
+              [placeholder]="'MATERIAS.FIELD_DESCRIPTION_PLACEHOLDER' | translate"
+            ></textarea>
+          </div>
+
+          <div class="form-group form-group-full checkbox-group">
+            <input id="materia-activa" type="checkbox" formControlName="activa" />
+            <label for="materia-activa">{{ 'MATERIAS.FIELD_ACTIVE' | translate }}</label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">
+            {{ 'COMMON.CANCEL' | translate }}
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+            {{ 'COMMON.SAVE' | translate }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="search-wrapper">
+        <label for="materias-search" class="sr-only">{{ 'COMMON.SEARCH' | translate }}</label>
+        <input
+          id="materias-search"
+          type="search"
+          class="search-input"
+          [value]="searchTerm()"
+          (input)="onSearchInput($event)"
+          [placeholder]="'MATERIAS.SEARCH_PLACEHOLDER' | translate"
+        />
+      </div>
+
+      <label class="filter-checkbox" for="materias-only-active">
+        <input
+          id="materias-only-active"
+          type="checkbox"
+          [checked]="onlyActive()"
+          (change)="onOnlyActiveChange($event)"
+        />
+        <span>{{ 'MATERIAS.ONLY_ACTIVE' | translate }}</span>
+      </label>
+    </div>
+
+    @if (isLoading()) {
+      <p class="state-message" role="status">{{ 'COMMON.LOADING' | translate }}</p>
+    } @else if (filteredMaterias().length === 0) {
+      <p class="state-message">
+        {{ (materias().length === 0 ? 'MATERIAS.EMPTY_LIST' : 'COMMON.NO_RESULTS') | translate }}
+      </p>
+    } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'MATERIAS.COL_CODE' | translate }}</th>
+              <th scope="col">{{ 'MATERIAS.COL_NAME' | translate }}</th>
+              <th scope="col">{{ 'MATERIAS.COL_DESCRIPTION' | translate }}</th>
+              <th scope="col">{{ 'MATERIAS.COL_CREDITS' | translate }}</th>
+              <th scope="col">{{ 'MATERIAS.COL_STATUS' | translate }}</th>
+              @if (isCoordinator()) {
+                <th scope="col">{{ 'MATERIAS.COL_ACTIONS' | translate }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (materia of filteredMaterias(); track materia.id) {
+              <tr>
+                <td>
+                  <span class="code-badge">{{ materia.codigo }}</span>
+                </td>
+                <td class="name-cell">{{ materia.nombre }}</td>
+                <td class="desc-cell">{{ materia.descripcion || '—' }}</td>
+                <td>{{ materia.creditos }} {{ 'MATERIAS.CREDITS_UNIT' | translate }}</td>
+                <td>
+                  <span
+                    class="status-badge"
+                    [class.status-active]="materia.activa"
+                    [class.status-inactive]="!materia.activa"
+                  >
+                    {{ (materia.activa ? 'COMMON.ACTIVE' : 'COMMON.INACTIVE') | translate }}
+                  </span>
+                </td>
+                @if (isCoordinator()) {
+                  <td class="actions-cell">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-secondary"
+                      (click)="openEditForm(materia)"
+                      [attr.aria-label]="('COMMON.EDIT' | translate) + ' ' + materia.codigo + ' ' + materia.nombre"
+                    >
+                      {{ 'COMMON.EDIT' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-danger"
+                      (click)="onDelete(materia)"
+                      [attr.aria-label]="('COMMON.DELETE' | translate) + ' ' + materia.codigo + ' ' + materia.nombre"
+                    >
+                      {{ 'COMMON.DELETE' | translate }}
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>

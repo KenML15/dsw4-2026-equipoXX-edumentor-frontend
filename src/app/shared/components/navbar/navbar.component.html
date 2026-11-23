@@ -1,0 +1,103 @@
+<a class="skip-link" href="#main-content">
+  {{ 'NAV.SKIP_TO_CONTENT' | translate }}
+</a>
+
+<header class="navbar-header">
+  <div class="navbar-container">
+    <a
+      class="brand-link"
+      [routerLink]="auth.isAuthenticated() ? '/materias' : '/login'"
+      (click)="closeMobileMenu()"
+    >
+      <span class="brand-badge" aria-hidden="true">EM</span>
+      <span class="brand-text">{{ 'NAV.BRAND' | translate }}</span>
+    </a>
+
+    <button
+      type="button"
+      class="menu-toggle"
+      (click)="toggleMobileMenu()"
+      [attr.aria-expanded]="mobileMenuOpen()"
+      aria-controls="primary-navigation"
+      [attr.aria-label]="'NAV.MENU_TOGGLE' | translate"
+    >
+      <span aria-hidden="true">{{ mobileMenuOpen() ? '✕' : '☰' }}</span>
+    </button>
+
+    <nav
+      id="primary-navigation"
+      class="nav-content"
+      [class.open]="mobileMenuOpen()"
+      [attr.aria-label]="'NAV.MAIN_NAVIGATION' | translate"
+    >
+      <ul class="nav-links">
+        @if (auth.isAuthenticated()) {
+          <li>
+            <a
+              routerLink="/materias"
+              routerLinkActive="active"
+              class="nav-link"
+              (click)="closeMobileMenu()"
+            >
+              {{ 'NAV.MATERIAS' | translate }}
+            </a>
+          </li>
+          @if (canManageAvailability()) {
+            <li>
+              <a
+                routerLink="/disponibilidad"
+                routerLinkActive="active"
+                class="nav-link"
+                (click)="closeMobileMenu()"
+              >
+                {{ 'NAV.DISPONIBILIDAD' | translate }}
+              </a>
+            </li>
+          }
+        } @else {
+          <li>
+            <a
+              routerLink="/login"
+              routerLinkActive="active"
+              class="nav-link"
+              (click)="closeMobileMenu()"
+            >
+              {{ 'NAV.LOGIN' | translate }}
+            </a>
+          </li>
+          <li>
+            <a
+              routerLink="/register"
+              routerLinkActive="active"
+              class="nav-link"
+              (click)="closeMobileMenu()"
+            >
+              {{ 'NAV.REGISTER' | translate }}
+            </a>
+          </li>
+        }
+      </ul>
+
+      <div class="nav-actions">
+        <button
+          type="button"
+          class="lang-btn"
+          (click)="i18n.toggleLanguage()"
+          [attr.aria-label]="'NAV.SWITCH_LANG_LABEL' | translate"
+        >
+          {{ i18n.currentLang() === 'es' ? 'EN' : 'ES' }}
+        </button>
+
+        @if (auth.currentUser(); as user) {
+          <div class="user-chip" aria-live="polite">
+            <span class="user-name">{{ user.nombre }} {{ user.apellido }}</span>
+            <span class="user-role">{{ roleTranslationKey() | translate }}</span>
+          </div>
+          <button type="button" class="logout-btn" (click)="onLogout()">
+            {{ 'NAV.LOGOUT' | translate }}
+          </button>
+        }
+      </div>
+    </nav>
+  </div>
+</header>

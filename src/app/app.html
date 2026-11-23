@@ -1,7 +1,11 @@
-<header style="display: flex; justify-content: flex-end; padding: 1rem 1.5rem;">
-  <button type="button" (click)="i18n.toggleLanguage()" aria-label="Cambiar idioma / Switch language">
-    {{ i18n.currentLang() === 'es' ? 'EN' : 'ES' }}
-  </button>
-</header>
+<div class="app-shell">
+  <app-navbar />
 
-<router-outlet />
+  <main id="main-content" class="app-main" tabindex="-1">
+    <router-outlet />
+  </main>
+
+  <footer class="app-footer">
+    <p>{{ 'FOOTER.TEXT' | translate }}</p>
+  </footer>
+</div>

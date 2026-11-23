@@ -18,10 +18,11 @@ export class AuthService {
   private readonly tokenKey = 'edumentor_token';
   private readonly userKey = 'edumentor_user';
 
+  private readonly tokenSignal = signal<string | null>(this.loadStoredToken());
   private readonly currentUserSignal = signal<Usuario | null>(this.loadStoredUser());
 
   readonly currentUser = this.currentUserSignal.asReadonly();
-  readonly isAuthenticated = computed(() => !!this.getToken() && !!this.currentUserSignal());
+  readonly isAuthenticated = computed(() => !!this.tokenSignal() && !!this.currentUserSignal());
   readonly userRole = computed<Rol | null>(() => this.currentUserSignal()?.rol ?? this.extractRoleFromToken());
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
@@ -48,8 +49,7 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    if (!this.isBrowser) return null;
-    return localStorage.getItem(this.tokenKey);
+    return this.tokenSignal();
   }
 
   hasRole(allowedRoles: Rol[]): boolean {
@@ -62,6 +62,7 @@ export class AuthService {
       localStorage.removeItem(this.tokenKey);
       localStorage.removeItem(this.userKey);
     }
+    this.tokenSignal.set(null);
     this.currentUserSignal.set(null);
     this.router.navigate(['/login']);
   }
@@ -71,7 +72,13 @@ export class AuthService {
       localStorage.setItem(this.tokenKey, response.token);
       localStorage.setItem(this.userKey, JSON.stringify(response.usuario));
     }
+    this.tokenSignal.set(response.token);
     this.currentUserSignal.set(response.usuario);
+  }
+
+  private loadStoredToken(): string | null {
+    if (!this.isBrowser) return null;
+    return localStorage.getItem(this.tokenKey);
   }
 
   private loadStoredUser(): Usuario | null {
@@ -86,7 +93,7 @@ export class AuthService {
   }
 
   private extractRoleFromToken(): Rol | null {
-    const token = this.getToken();
+    const token = this.tokenSignal();
     if (!token) return null;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
