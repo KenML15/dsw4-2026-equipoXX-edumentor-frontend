@@ -13,16 +13,22 @@
       <p class="coordinator-hint">{{ 'DISPONIBILIDAD.COORDINATOR_HINT' | translate }}</p>
       <div class="coordinator-controls">
         <label for="coord-tutor-id">{{ 'DISPONIBILIDAD.FIELD_TUTOR_ID' | translate }}</label>
-        <input
-          id="coord-tutor-id"
-          type="number"
-          min="1"
-          [value]="coordinatorTutorId()"
-          (input)="onCoordinatorTutorIdChange($event)"
-        />
-        <button type="button" class="btn btn-primary" (click)="loadBloques()">
-          {{ 'DISPONIBILIDAD.COORDINATOR_LOAD' | translate }}
-        </button>
+        @if (tutores().length === 0) {
+          <span class="coordinator-hint" role="status">{{ 'DISPONIBILIDAD.NO_TUTORS' | translate }}</span>
+        } @else {
+          <select
+            id="coord-tutor-id"
+            [value]="coordinatorTutorId() ?? ''"
+            (change)="onCoordinatorTutorChange($event)"
+          >
+            @for (tutor of tutores(); track tutor.id) {
+              <option [value]="tutor.id" [selected]="tutor.id === coordinatorTutorId()">{{ tutor.nombreCompleto }}</option>
+            }
+          </select>
+          <button type="button" class="btn btn-secondary" (click)="loadBloques()" [disabled]="isLoading()">
+            {{ 'DISPONIBILIDAD.COORDINATOR_LOAD' | translate }}
+          </button>
+        }
       </div>
     </div>
   }
