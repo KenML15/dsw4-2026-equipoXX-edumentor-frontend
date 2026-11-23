@@ -42,6 +42,29 @@
               {{ 'NAV.MATERIAS' | translate }}
             </a>
           </li>
+          <li>
+            <a
+              routerLink="/sesiones"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="nav-link"
+              (click)="closeMobileMenu()"
+            >
+              {{ 'NAV.MIS_SESIONES' | translate }}
+            </a>
+          </li>
+          @if (canBookSessions()) {
+            <li>
+              <a
+                routerLink="/sesiones/reservar"
+                routerLinkActive="active"
+                class="nav-link"
+                (click)="closeMobileMenu()"
+              >
+                {{ 'NAV.RESERVAR' | translate }}
+              </a>
+            </li>
+          }
           @if (canManageAvailability()) {
             <li>
               <a

@@ -1,0 +1,125 @@
+<section class="page-section" aria-labelledby="mis-sesiones-heading">
+  <header class="page-header">
+    <div>
+      <h1 id="mis-sesiones-heading" class="page-title">{{ 'SESIONES.MIS_TITLE' | translate }}</h1>
+      <p class="page-subtitle">{{ 'SESIONES.MIS_SUBTITLE_' + (rol() ?? 'ESTUDIANTE') | translate }}</p>
+    </div>
+    @if (esEstudiante()) {
+      <a routerLink="/sesiones/reservar" class="btn btn-primary">+ {{ 'SESIONES.NEW_BUTTON' | translate }}</a>
+    }
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="alert alert-error" role="alert">{{ error }}</div>
+  }
+
+  @if (successMessage(); as success) {
+    <div class="alert alert-success" role="status" aria-live="polite">{{ success }}</div>
+  }
+
+  @if (reglas().length > 0) {
+    <details class="card reglas-panel">
+      <summary>{{ 'SESIONES.RULES_TITLE' | translate }}</summary>
+      <ul>
+        @for (regla of reglas(); track regla) {
+          <li>{{ regla | translate }}</li>
+        }
+      </ul>
+    </details>
+  }
+
+  <div class="card">
+    <div class="toolbar">
+      <label for="sesiones-filtro" class="toolbar-label">{{ 'SESIONES.FILTER_LABEL' | translate }}</label>
+      <select id="sesiones-filtro" [value]="filtroEstado()" (change)="onFiltroChange($event)">
+        <option value="TODOS">{{ 'SESIONES.FILTER_ALL' | translate }}</option>
+        @for (estado of estados; track estado) {
+          <option [value]="estado">{{ 'SESIONES.ESTADO_' + estado | translate }}</option>
+        }
+      </select>
+      <button type="button" class="btn btn-secondary btn-sm" (click)="cargarSesiones()" [disabled]="isLoading()">
+        {{ 'SESIONES.REFRESH' | translate }}
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <p class="state-message" role="status">{{ 'COMMON.LOADING' | translate }}</p>
+    } @else if (sesionesFiltradas().length === 0) {
+      <p class="state-message">
+        {{ (sesiones().length === 0 ? 'SESIONES.EMPTY' : 'COMMON.NO_RESULTS') | translate }}
+      </p>
+    } @else {
+      <ul class="sesiones-list">
+        @for (sesion of sesionesFiltradas(); track sesion.id) {
+          <li class="sesion-item">
+            <article class="sesion-card" [attr.aria-labelledby]="'sesion-titulo-' + sesion.id">
+              <div class="sesion-head">
+                <h2 class="sesion-titulo" [id]="'sesion-titulo-' + sesion.id">
+                  <span class="code-badge">{{ sesion.materiaCodigo }}</span>
+                  {{ sesion.materiaNombre }}
+                </h2>
+                <span class="estado-badge" [attr.data-estado]="sesion.estado">
+                  {{ 'SESIONES.ESTADO_' + sesion.estado | translate }}
+                </span>
+              </div>
+
+              <dl class="sesion-datos">
+                <div>
+                  <dt>{{ (esEstudiante() ? 'SESIONES.COL_TUTOR' : 'SESIONES.COL_ESTUDIANTE') | translate }}</dt>
+                  <dd>{{ contraparte(sesion) }}</dd>
+                </div>
+                <div>
+                  <dt>{{ 'SESIONES.COL_FECHA' | translate }}</dt>
+                  <dd>{{ formatearFecha(sesion.fechaHora) }} – {{ formatearHora(sesion.fechaHoraFin) }}</dd>
+                </div>
+                <div>
+                  <dt>{{ 'SESIONES.COL_DURACION' | translate }}</dt>
+                  <dd>{{ 'SESIONES.MINUTES' | translate: { min: sesion.duracionMinutos } }}</dd>
+                </div>
+                <div>
+                  <dt>{{ 'SESIONES.COL_MODALIDAD' | translate }}</dt>
+                  <dd>{{ 'SESIONES.MODALIDAD_' + sesion.modalidad | translate }}</dd>
+                </div>
+                @if (sesion.enlaceOUbicacion) {
+                  <div class="dato-full">
+                    <dt>{{ 'SESIONES.COL_ENLACE' | translate }}</dt>
+                    <dd class="enlace">{{ sesion.enlaceOUbicacion }}</dd>
+                  </div>
+                }
+              </dl>
+
+              @let acciones = accionesDisponibles(sesion);
+              @if (acciones.length > 0) {
+                <div class="sesion-acciones" role="group" [attr.aria-label]="'SESIONES.ACTIONS_GROUP' | translate">
+                  @for (item of acciones; track item.accion) {
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [attr.data-accion]="item.accion"
+                      [class.btn-primary]="item.accion === 'aceptar' || item.accion === 'iniciar' || item.accion === 'finalizar'"
+                      [class.btn-secondary]="item.accion === 'rechazar'"
+                      [class.btn-danger]="item.accion === 'cancelar'"
+                      [disabled]="procesandoId() !== null || !item.habilitada"
+                      [attr.aria-label]="etiquetaAccion(sesion, item.accion)"
+                      [attr.aria-describedby]="item.motivoKey ? 'motivo-' + sesion.id + '-' + item.accion : null"
+                      (click)="ejecutarAccion(sesion, item.accion)"
+                    >
+                      {{ 'SESIONES.ACTION_' + item.accion.toUpperCase() | translate }}
+                    </button>
+                  }
+                </div>
+                @for (item of acciones; track item.accion) {
+                  @if (item.motivoKey) {
+                    <p class="motivo" [id]="'motivo-' + sesion.id + '-' + item.accion">
+                      {{ item.motivoKey | translate: item.motivoParams }}
+                    </p>
+                  }
+                }
+              }
+            </article>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>
