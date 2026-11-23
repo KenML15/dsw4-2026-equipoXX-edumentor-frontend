@@ -21,6 +21,8 @@ export class NavbarComponent {
     this.auth.hasRole(['TUTOR', 'COORDINADOR'])
   );
 
+  readonly canBookSessions = computed(() => this.auth.hasRole(['ESTUDIANTE']));
+
   readonly roleTranslationKey = computed(() => {
     const rol = this.auth.userRole();
     return rol ? `AUTH.ROLE_${rol}` : '';

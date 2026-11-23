@@ -28,6 +28,19 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'sesiones/reservar',
+    canActivate: [roleGuard],
+    data: { roles: ['ESTUDIANTE'] },
+    loadComponent: () =>
+      import('./features/sesiones/reservar-sesion.component').then(m => m.ReservarSesionComponent)
+  },
+  {
+    path: 'sesiones',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/sesiones/mis-sesiones.component').then(m => m.MisSesionesComponent)
+  },
+  {
     path: '',
     redirectTo: 'materias',
     pathMatch: 'full'
