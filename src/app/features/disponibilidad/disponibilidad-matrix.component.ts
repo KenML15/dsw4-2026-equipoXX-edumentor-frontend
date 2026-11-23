@@ -9,8 +9,10 @@ import {
 } from '../../core/models/disponibilidad.models';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { AuthService } from '../../core/services/auth.service';
+import { TutorResumen } from '../../core/models/sesion.models';
 import { DisponibilidadService } from '../../core/services/disponibilidad.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { SesionService } from '../../core/services/sesion.service';
 
 @Component({
   selector: 'app-disponibilidad-matrix',
@@ -21,6 +23,7 @@ import { I18nService } from '../../core/services/i18n.service';
 })
 export class DisponibilidadMatrixComponent implements OnInit {
   private readonly disponibilidadService = inject(DisponibilidadService);
+  private readonly sesionService = inject(SesionService);
   private readonly authService = inject(AuthService);
   private readonly i18n = inject(I18nService);
   private readonly fb = inject(NonNullableFormBuilder);
@@ -36,7 +39,8 @@ export class DisponibilidadMatrixComponent implements OnInit {
   readonly successMessage = signal<string | null>(null);
 
   readonly isCoordinator = computed(() => this.authService.hasRole(['COORDINADOR']));
-  readonly coordinatorTutorId = signal<number>(2);
+  readonly tutores = signal<TutorResumen[]>([]);
+  readonly coordinatorTutorId = signal<number | null>(null);
 
   readonly blockForm = this.fb.group({
     diaSemana: ['MONDAY' as DiaSemana, [Validators.required]],
@@ -45,17 +49,52 @@ export class DisponibilidadMatrixComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    if (this.isCoordinator()) {
+      this.loadTutores();
+    } else {
       this.loadBloques();
     }
   }
 
-  loadBloques(): void {
+  loadTutores(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    const request$ = this.isCoordinator()
-      ? this.disponibilidadService.listarPorTutor(this.coordinatorTutorId(), false)
+    this.sesionService.listarTutores().subscribe({
+      next: tutores => {
+        this.tutores.set(tutores);
+        const actual = this.coordinatorTutorId();
+        const seleccion = tutores.some(t => t.id === actual) ? actual : tutores[0]?.id ?? null;
+        this.coordinatorTutorId.set(seleccion);
+        if (seleccion === null) {
+          this.isLoading.set(false);
+          this.bloques.set([]);
+          return;
+        }
+        this.loadBloques();
+      },
+      error: err => {
+        this.isLoading.set(false);
+        this.errorMessage.set(err.error?.detail || this.i18n.translate('COMMON.ERROR_GENERIC'));
+      }
+    });
+  }
+
+  loadBloques(): void {
+    const tutorId = this.coordinatorTutorId();
+    if (this.isCoordinator() && tutorId === null) {
+      this.bloques.set([]);
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    const request$ = this.isCoordinator() && tutorId !== null
+      ? this.disponibilidadService.listarPorTutor(tutorId, false)
       : this.disponibilidadService.listarMias();
 
     request$.subscribe({
@@ -71,11 +110,14 @@ export class DisponibilidadMatrixComponent implements OnInit {
     });
   }
 
-  onCoordinatorTutorIdChange(event: Event): void {
-    const value = Number((event.target as HTMLInputElement).value);
-    if (!Number.isNaN(value) && value > 0) {
-      this.coordinatorTutorId.set(value);
+  onCoordinatorTutorChange(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    if (Number.isNaN(value) || value <= 0 || value === this.coordinatorTutorId()) {
+      return;
     }
+    this.coordinatorTutorId.set(value);
+    this.successMessage.set(null);
+    this.loadBloques();
   }
 
   onAddBlockSubmit(): void {
@@ -192,6 +234,10 @@ export class DisponibilidadMatrixComponent implements OnInit {
   }
 
   private createBlock(diaSemana: DiaSemana, horaInicio: string, horaFin: string): void {
+    if (this.isCoordinator() && this.coordinatorTutorId() === null) {
+      this.errorMessage.set(this.i18n.translate('DISPONIBILIDAD.ERR_NO_TUTOR_SELECTED'));
+      return;
+    }
     this.isSaving.set(true);
     this.errorMessage.set(null);
     this.successMessage.set(null);
