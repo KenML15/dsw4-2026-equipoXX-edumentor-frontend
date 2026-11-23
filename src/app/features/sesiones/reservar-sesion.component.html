@@ -1,0 +1,205 @@
+<section class="page-section" aria-labelledby="reserva-heading">
+  <header class="page-header">
+    <div>
+      <h1 id="reserva-heading" class="page-title">{{ 'SESIONES.RESERVA_TITLE' | translate }}</h1>
+      <p class="page-subtitle">{{ 'SESIONES.RESERVA_SUBTITLE' | translate }}</p>
+    </div>
+    <a routerLink="/sesiones" class="btn btn-secondary">{{ 'SESIONES.GO_TO_MY_SESSIONS' | translate }}</a>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="alert alert-error" role="alert">{{ error }}</div>
+  }
+
+  @if (successMessage(); as success) {
+    <div class="alert alert-success" role="status" aria-live="polite">
+      {{ success }}
+      <a routerLink="/sesiones" class="alert-link">{{ 'SESIONES.GO_TO_MY_SESSIONS' | translate }}</a>
+    </div>
+  }
+
+  <div class="reserva-layout">
+    <section class="card" aria-labelledby="reserva-form-heading">
+      <h2 id="reserva-form-heading" class="card-title">{{ 'SESIONES.RESERVA_FORM_TITLE' | translate }}</h2>
+
+      @if (isLoading()) {
+        <p class="state-message" role="status">{{ 'COMMON.LOADING' | translate }}</p>
+      }
+
+      <form [formGroup]="reservaForm" (ngSubmit)="onSubmit()" novalidate>
+        <div class="form-grid">
+          <div class="form-group form-group-full">
+            <label for="reserva-materia">{{ 'SESIONES.FIELD_MATERIA' | translate }}</label>
+            <select
+              id="reserva-materia"
+              formControlName="materiaId"
+              [attr.aria-invalid]="mostrarError('materiaId')"
+              aria-describedby="reserva-materia-error"
+            >
+              <option [ngValue]="null" disabled>{{ 'SESIONES.SELECT_MATERIA' | translate }}</option>
+              @for (materia of materias(); track materia.id) {
+                <option [ngValue]="materia.id">{{ materia.codigo }} · {{ materia.nombre }}</option>
+              }
+            </select>
+            @if (mostrarError('materiaId')) {
+              <span id="reserva-materia-error" class="field-error" role="alert">
+                {{ 'SESIONES.ERR_MATERIA_REQUIRED' | translate }}
+              </span>
+            }
+          </div>
+
+          <div class="form-group form-group-full">
+            <label for="reserva-tutor">{{ 'SESIONES.FIELD_TUTOR' | translate }}</label>
+            <select
+              id="reserva-tutor"
+              formControlName="tutorId"
+              [attr.aria-invalid]="mostrarError('tutorId')"
+              aria-describedby="reserva-tutor-error"
+            >
+              <option [ngValue]="null" disabled>{{ 'SESIONES.SELECT_TUTOR' | translate }}</option>
+              @for (tutor of tutores(); track tutor.id) {
+                <option [ngValue]="tutor.id">{{ tutor.nombreCompleto }}</option>
+              }
+            </select>
+            @if (mostrarError('tutorId')) {
+              <span id="reserva-tutor-error" class="field-error" role="alert">
+                {{ 'SESIONES.ERR_TUTOR_REQUIRED' | translate }}
+              </span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="reserva-fecha">{{ 'SESIONES.FIELD_FECHA' | translate }}</label>
+            <input
+              id="reserva-fecha"
+              type="date"
+              formControlName="fecha"
+              [min]="fechaMinima"
+              [attr.aria-invalid]="mostrarError('fecha') || mostrarErrorFechaPasada()"
+              aria-describedby="reserva-fecha-error reserva-fecha-hint"
+            />
+            @if (mostrarError('fecha')) {
+              <span id="reserva-fecha-error" class="field-error" role="alert">
+                {{ 'SESIONES.ERR_FECHA_REQUIRED' | translate }}
+              </span>
+            }
+            @if (diaSeleccionadoSinBloques()) {
+              <span id="reserva-fecha-hint" class="field-hint" role="status">
+                {{ 'SESIONES.DIA_SIN_BLOQUES' | translate: { dias: nombresDiasDelTutor() || '—' } }}
+              </span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="reserva-duracion">{{ 'SESIONES.FIELD_DURACION' | translate }}</label>
+            <select id="reserva-duracion" formControlName="duracionMinutos">
+              @for (duracion of duraciones; track duracion) {
+                <option [ngValue]="duracion">{{ 'SESIONES.MINUTES' | translate: { min: duracion } }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group form-group-full">
+            <label for="reserva-hora">{{ 'SESIONES.FIELD_HORA' | translate }}</label>
+            <select
+              id="reserva-hora"
+              formControlName="hora"
+              [attr.aria-invalid]="mostrarError('hora') || mostrarErrorFechaPasada()"
+              aria-describedby="reserva-hora-error reserva-hora-hint"
+            >
+              <option value="" disabled>{{ placeholderHora() | translate }}</option>
+              @for (hora of horasDisponibles(); track hora) {
+                <option [value]="hora">{{ hora }} – {{ horaFin(hora) }}</option>
+              }
+            </select>
+            <span id="reserva-hora-hint" class="field-hint">{{ 'SESIONES.HORA_HINT' | translate }}</span>
+            @if (mostrarError('hora')) {
+              <span id="reserva-hora-error" class="field-error" role="alert">
+                {{ errorHoraKey() | translate }}
+              </span>
+            }
+          </div>
+
+          @if (mostrarErrorFechaPasada()) {
+            <p class="field-error form-group-full" role="alert">{{ 'SESIONES.ERR_FECHA_PASADA' | translate }}</p>
+          }
+
+          <fieldset class="form-group form-group-full modalidad-group">
+            <legend>{{ 'SESIONES.FIELD_MODALIDAD' | translate }}</legend>
+            <div class="radio-row">
+              @for (modalidad of modalidades; track modalidad) {
+                <label class="radio-option" [for]="'reserva-modalidad-' + modalidad">
+                  <input
+                    type="radio"
+                    [id]="'reserva-modalidad-' + modalidad"
+                    formControlName="modalidad"
+                    [value]="modalidad"
+                  />
+                  {{ 'SESIONES.MODALIDAD_' + modalidad | translate }}
+                </label>
+              }
+            </div>
+          </fieldset>
+
+          <div class="form-group form-group-full">
+            <label for="reserva-enlace">
+              {{ (modalidadSeleccionada() === 'VIRTUAL' ? 'SESIONES.FIELD_ENLACE_VIRTUAL' : 'SESIONES.FIELD_UBICACION') | translate }}
+            </label>
+            <input
+              id="reserva-enlace"
+              [type]="modalidadSeleccionada() === 'VIRTUAL' ? 'url' : 'text'"
+              formControlName="enlaceOUbicacion"
+              [attr.maxlength]="largoMaximoEnlace"
+              [placeholder]="(modalidadSeleccionada() === 'VIRTUAL' ? 'SESIONES.PLACEHOLDER_ENLACE' : 'SESIONES.PLACEHOLDER_UBICACION') | translate"
+              [attr.aria-invalid]="mostrarError('enlaceOUbicacion')"
+              aria-describedby="reserva-enlace-error"
+              aria-required="true"
+            />
+            @if (mostrarError('enlaceOUbicacion')) {
+              <span id="reserva-enlace-error" class="field-error" role="alert">
+                {{ errorEnlaceKey() | translate }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+            {{ 'SESIONES.SUBMIT_RESERVA' | translate }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div class="side-column">
+      <aside class="card" aria-labelledby="bloques-tutor-heading">
+        <h2 id="bloques-tutor-heading" class="card-title">{{ 'SESIONES.TUTOR_AVAILABILITY' | translate }}</h2>
+        @if (reservaForm.controls.tutorId.value === null) {
+          <p class="hint">{{ 'SESIONES.TUTOR_AVAILABILITY_HINT' | translate }}</p>
+        } @else if (bloquesTutor().length === 0) {
+          <p class="hint">{{ 'SESIONES.TUTOR_NO_BLOCKS' | translate }}</p>
+        } @else {
+          <ul class="bloques-list">
+            @for (bloque of bloquesTutor(); track bloque.id) {
+              <li>
+                <span class="bloque-dia">{{ 'DAYS.' + bloque.diaSemana | translate }}</span>
+                <span>{{ formatearHora(bloque.horaInicio) }} – {{ formatearHora(bloque.horaFin) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </aside>
+
+      <aside class="card" aria-labelledby="reglas-reserva-heading">
+        <h2 id="reglas-reserva-heading" class="card-title">{{ 'SESIONES.RULES_TITLE' | translate }}</h2>
+        <ul class="reglas-list">
+          <li>{{ 'SESIONES.RULE_REQUEST' | translate }}</li>
+          <li>{{ 'SESIONES.RULE_CANCEL_REQUESTED' | translate }}</li>
+          <li>{{ 'SESIONES.RULE_CANCEL_CONFIRMED' | translate }}</li>
+          <li>{{ 'SESIONES.RULE_VIRTUAL' | translate }}</li>
+          <li>{{ 'SESIONES.RULE_TIMEZONE' | translate }}</li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+</section>
